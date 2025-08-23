@@ -63,14 +63,15 @@ locations.forEach(loc => {
   const marker = L.marker([loc.lat, loc.lng]).addTo(map);
 
   marker.bindPopup(`
-    <div class="p-2">
-      <h3 class="font-bold">${loc.name}</h3>
+    <div class="p-2 max-w-xs">
+      <h3 class="font-bold text-lg">${loc.name}</h3>
+      <p class="text-xs italic text-gray-500 mb-1">${loc.category}</p>
       <p class="text-sm">${loc.description}</p>
-      <img class="w-40 mt-2 rounded" src="${loc.image}" alt="${loc.name}">
+      <img class="w-40 mt-2 rounded shadow" src="${loc.image}" alt="${loc.name}">
     </div>
   `);
 
-  // --- Bounce animation on marker click ---
+  // Bounce on marker click
   marker.on("click", () => {
     markerBounce(marker);
   });
@@ -78,14 +79,14 @@ locations.forEach(loc => {
   markers.push({ ...loc, marker });
 });
 
-// Bounce animation helper
+// --- Bounce animation helper ---
 function markerBounce(marker) {
   let i = 0;
   const interval = setInterval(() => {
-    const offset = (i % 2 === 0 ? -20 : 20); // bounce up & down
+    const offset = (i % 2 === 0 ? -15 : 15); // bounce up/down
     marker._icon.style.transform = `translateY(${offset}px)`;
     i++;
-    if (i > 3) {
+    if (i > 4) {
       clearInterval(interval);
       marker._icon.style.transform = "translateY(0)";
     }
@@ -101,7 +102,7 @@ function renderList(filteredLocations = locations) {
     li.className = "p-2 border-b cursor-pointer hover:bg-gray-100";
     li.innerHTML = `<strong>${loc.name}</strong><br><small>${loc.category}</small>`;
     li.onclick = () => {
-      map.setView([loc.lat, loc.lng], 12);
+      map.flyTo([loc.lat, loc.lng], 12, { animate: true, duration: 1.5 });
       loc.marker.openPopup();
       markerBounce(loc.marker);
     };
@@ -121,7 +122,7 @@ function handleSearch() {
   );
 
   if (match) {
-    map.setView([match.lat, match.lng], 12);
+    map.flyTo([match.lat, match.lng], 12, { animate: true, duration: 1.5 });
     match.marker.openPopup();
     markerBounce(match.marker);
   } else {

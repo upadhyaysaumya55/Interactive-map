@@ -18,7 +18,10 @@ import {
   Text,
 } from "ol/style";
 
-// Icons by category
+// ✅ Retina detection
+const isRetina = window.devicePixelRatio > 1;
+
+// ✅ Category icons
 const ICONS = {
   restaurant: "https://cdn-icons-png.flaticon.com/512/3075/3075977.png",
   park: "https://cdn-icons-png.flaticon.com/512/684/684908.png",
@@ -26,13 +29,24 @@ const ICONS = {
   default: "https://openlayers.org/en/latest/examples/data/icon.png",
 };
 
-// ✅ Basemaps (Carto = English labels + clean styles, Esri satellite)
+// ✅ Basemaps
 const basemaps = {
   Voyager: new XYZ({
-    url: "https://{a-d}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
+    url: `https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}${
+      isRetina ? "@2x" : ""
+    }.png`,
     attributions:
-      '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> contributors &copy; <a href="https://carto.com/">CARTO</a>',
+      '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/">CARTO</a>',
     maxZoom: 20,
+    tilePixelRatio: isRetina ? 2 : 1,
+    crossOrigin: "anonymous",
+  }),
+  Dark: new XYZ({
+    url: `https://basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}${
+      isRetina ? "@2x" : ""
+    }.png`,
+    maxZoom: 20,
+    tilePixelRatio: isRetina ? 2 : 1,
     crossOrigin: "anonymous",
   }),
   Satellite: new XYZ({
@@ -46,12 +60,8 @@ const MapView = ({ locations = [], onLocate, searchResult }) => {
   const mapRef = useRef(null);
   const vectorSourceRef = useRef(new VectorSource());
   const clusterSourceRef = useRef(
-    new Cluster({
-      distance: 40,
-      source: vectorSourceRef.current,
-    })
+    new Cluster({ distance: 40, source: vectorSourceRef.current })
   );
-
   const userLayerRef = useRef(null);
   const overlayRef = useRef(null);
   const popupRef = useRef(null);
@@ -59,7 +69,7 @@ const MapView = ({ locations = [], onLocate, searchResult }) => {
 
   const [activeBasemap, setActiveBasemap] = useState("Voyager");
 
-  // Style function for POIs & clusters
+  // ✅ Style function
   const styleFunction = (feature) => {
     const size = feature.get("features")?.length || 1;
 
@@ -98,7 +108,7 @@ const MapView = ({ locations = [], onLocate, searchResult }) => {
     });
   };
 
-  // Init map
+  // ✅ Init map
   useEffect(() => {
     if (!mapRef.current) return;
 
@@ -116,10 +126,7 @@ const MapView = ({ locations = [], onLocate, searchResult }) => {
       zIndex: 10,
     });
 
-    const userLayer = new VectorLayer({
-      source: new VectorSource(),
-      zIndex: 20,
-    });
+    const userLayer = new VectorLayer({ source: new VectorSource(), zIndex: 20 });
     userLayerRef.current = userLayer;
 
     const map = new Map({
@@ -136,7 +143,11 @@ const MapView = ({ locations = [], onLocate, searchResult }) => {
       overlays: [overlay],
     });
 
-    // Popup on click
+    setTimeout(() => {
+      map.updateSize();
+    }, 200);
+
+    // ✅ Popup on click
     map.on("click", (evt) => {
       const clusterFeature = map.forEachFeatureAtPixel(evt.pixel, (f) => f);
       if (!clusterFeature) {
@@ -181,7 +192,7 @@ const MapView = ({ locations = [], onLocate, searchResult }) => {
     };
   }, [activeBasemap]);
 
-  // Switch basemap
+  // ✅ Basemap switch
   useEffect(() => {
     if (mapInstance.current) {
       const baseLayer = mapInstance.current.getLayers().item(0);
@@ -189,11 +200,10 @@ const MapView = ({ locations = [], onLocate, searchResult }) => {
     }
   }, [activeBasemap]);
 
-  // Add POIs
+  // ✅ Add locations
   useEffect(() => {
     const src = vectorSourceRef.current;
     if (!src) return;
-
     src.clear();
 
     const features = locations.map((loc) => {
@@ -207,18 +217,14 @@ const MapView = ({ locations = [], onLocate, searchResult }) => {
     src.addFeatures(features);
   }, [locations]);
 
-  // Handle search result
+  // ✅ Handle search results
   useEffect(() => {
     if (!searchResult) return;
     const { lon, lat, name } = searchResult;
     const coord = fromLonLat([lon, lat]);
 
     const f = new Feature({ geometry: new Point(coord) });
-    f.setProperties({
-      type: "search",
-      name,
-      category: "Search Result",
-    });
+    f.setProperties({ type: "search", name, category: "Search Result" });
     vectorSourceRef.current.addFeature(f);
 
     mapInstance.current
@@ -246,7 +252,7 @@ const MapView = ({ locations = [], onLocate, searchResult }) => {
         const userSource = userLayerRef.current.getSource();
         userSource.clear();
 
-        // User marker
+        // Marker
         const user = new Feature({ geometry: new Point(coords) });
         user.setStyle(
           new Style({
@@ -303,16 +309,12 @@ const MapView = ({ locations = [], onLocate, searchResult }) => {
             alert("Unable to retrieve location.");
         }
       },
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 0,
-      }
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
   };
 
   return (
-    <div className="flex-1 relative">
+    <div className="flex-1 relative min-h-screen">
       {/* Basemap Switcher */}
       <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 flex space-x-2 bg-white/90 backdrop-blur-md p-2 rounded-2xl shadow-lg">
         {Object.keys(basemaps).map((name) => (
@@ -330,8 +332,16 @@ const MapView = ({ locations = [], onLocate, searchResult }) => {
         ))}
       </div>
 
-      <div ref={mapRef} className="w-full h-full" />
+      {/* Map container - full screen (fix footer gap) */}
+      <div
+        ref={mapRef}
+        className="w-full h-screen"
+        style={{
+          filter: "contrast(1.1) brightness(1.05) saturate(1.25)",
+        }}
+      />
       <div ref={popupRef} className="absolute z-50" />
+
       <button
         onClick={handleLocate}
         className="absolute top-4 right-4 bg-blue-600 text-white px-4 py-2 rounded-xl shadow hover:bg-blue-700 z-50"
