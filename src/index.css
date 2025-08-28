@@ -8,19 +8,10 @@ html, body, #root { height: 100%; }
 
 
 /* OpenLayers popup and small helpers */
-.ol-popup {
-position: relative;
-background: white;
-border-radius: 8px;
-box-shadow: 0 6px 18px rgba(0,0,0,0.12);
-padding: 8px;
-border: 1px solid rgba(15,23,42,0.06);
+/* Fix OpenLayers zoom control position */
+.ol-zoom {
+  top: auto !important;
+  left: auto !important;
+  right: 1rem !important;
+  bottom: 6rem !important; /* above Locate Me button */
 }
-
-
-.fade-in { animation: fadeIn 300ms ease-in-out; }
-@keyframes fadeIn { from {opacity: 0;} to {opacity: 1;} }
-
-
-/* Ensure the map container can grow */
-.map-root { height: 100%; min-height: 60vh; }

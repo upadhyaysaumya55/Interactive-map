@@ -1,11 +1,12 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
+import { X } from "lucide-react";
 
-const Sidebar = ({ locations, onSelect, onSearch }) => {
+const Sidebar = ({ locations, onSelect, onSearch, isOpen, onClose }) => {
   const [query, setQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("All");
 
-  // Extract unique categories from the locations list
-  const categories = ["All", ...new Set(locations.map((loc) => loc.category))];
+  // Unique categories
+  const categories = useMemo(() => ["All", ...new Set(locations.map((loc) => loc.category))], [locations]);
 
   const handleSearch = async () => {
     if (!query.trim()) return;
@@ -21,10 +22,12 @@ const Sidebar = ({ locations, onSelect, onSearch }) => {
         const { name, country } = data.features[0].properties;
 
         onSearch({
-          lon: coordinates[0],
+          lng: coordinates[0],
           lat: coordinates[1],
           name: `${name || query}, ${country || ""}`,
         });
+        setQuery(""); // clear search input
+        onClose(); // Auto-close sidebar after search
       } else {
         alert("No results found");
       }
@@ -34,17 +37,39 @@ const Sidebar = ({ locations, onSelect, onSearch }) => {
     }
   };
 
-  // Filtered locations based on category
-  const filteredLocations =
-    categoryFilter === "All"
+  // Filtered and unique POIs by id or lat,lng
+  const filteredLocations = useMemo(() => {
+    const filtered = categoryFilter === "All"
       ? locations
       : locations.filter((loc) => loc.category === categoryFilter);
 
-  return (
-    <div className="w-72 bg-gray-50 p-4 border-r border-gray-200 overflow-y-auto">
-      <h2 className="text-lg font-bold mb-4">📍 Points of Interest</h2>
+    const seen = new Set();
+    return filtered.filter((loc) => {
+      const key = loc.id ?? `${loc.lat},${loc.lng}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }, [locations, categoryFilter]);
 
-      {/* Search Box */}
+  return (
+    <div
+      className={`fixed md:static top-0 left-0 h-full w-72 bg-gray-50 p-4 border-r border-gray-200 overflow-y-auto transform transition-transform duration-300 z-50 ${
+        isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+      }`}
+    >
+      {/* Mobile close button */}
+      <div className="flex justify-between items-center mb-4 md:hidden">
+        <h2 className="text-lg font-bold">📍 Points of Interest</h2>
+        <button onClick={onClose} className="p-1">
+          <X size={20} />
+        </button>
+      </div>
+
+      {/* Desktop title */}
+      <h2 className="hidden md:block text-lg font-bold mb-4">📍 Points of Interest</h2>
+
+      {/* Search */}
       <div className="flex mb-4">
         <input
           type="text"
@@ -62,7 +87,7 @@ const Sidebar = ({ locations, onSelect, onSearch }) => {
         </button>
       </div>
 
-      {/* Category Filter Buttons */}
+      {/* Categories */}
       <div className="flex gap-2 mb-4 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-gray-300">
         {categories.map((cat) => (
           <button
@@ -79,11 +104,14 @@ const Sidebar = ({ locations, onSelect, onSearch }) => {
         ))}
       </div>
 
-      {/* List of POIs */}
+      {/* POI List */}
       {filteredLocations.map((loc) => (
         <div
-          key={loc.id}
-          onClick={() => onSelect(loc)}
+          key={loc.id ?? `${loc.lat},${loc.lng}`}
+          onClick={() => {
+            onSelect(loc);
+            onClose(); // Auto-close after selection
+          }}
           className="p-3 mb-2 bg-white rounded-lg shadow cursor-pointer hover:bg-gray-100 transition"
         >
           <div className="font-semibold">{loc.name}</div>
