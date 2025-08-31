@@ -97,7 +97,6 @@ const MapView = ({ locations = [], onLocate }) => {
     }
 
     const props = features[0].getProperties();
-    // ✅ now we use the `loc.icon` passed from App.jsx
     const iconUrl = props.icon || defaultIcon;
 
     return new Style({
@@ -230,7 +229,6 @@ const MapView = ({ locations = [], onLocate }) => {
       const f = new Feature({
         geometry: new Point(fromLonLat([loc.lng, loc.lat])),
       });
-      // ✅ make sure loc.icon is attached
       f.setProperties({ ...loc, type: "poi", icon: loc.icon || defaultIcon });
       return f;
     });
@@ -240,7 +238,27 @@ const MapView = ({ locations = [], onLocate }) => {
     clusterLayerRef.current.setStyle(styleFunction);
   }, [locations, styleFunction]);
 
-  // ✅ locate user
+  // ✅ helper to select location (FIX for your error)
+  const handleSelectLocation = (loc) => {
+    if (!mapInstance.current) return;
+    const coords = fromLonLat([loc.lng, loc.lat]);
+
+    mapInstance.current.getView().animate({
+      center: coords,
+      zoom: 15,
+      duration: 700,
+    });
+
+    popupRef.current.innerHTML = `
+      <div class="space-y-2">
+        <h3 class="font-bold text-base">${loc.name}</h3>
+        <p class="text-xs italic text-gray-500">${loc.category || ""}</p>
+      </div>
+    `;
+    popupOverlayRef.current.setPosition(coords);
+  };
+
+  // ✅ locate user (UPDATED with popup)
   const handleLocate = () => {
     if (!navigator.geolocation) return alert("Geolocation not supported");
     navigator.geolocation.getCurrentPosition(
@@ -248,7 +266,9 @@ const MapView = ({ locations = [], onLocate }) => {
         const coords = fromLonLat([pos.coords.longitude, pos.coords.latitude]);
         const userSource = userLayerRef.current.getSource();
         userSource.clear();
+
         const userFeature = new Feature({ geometry: new Point(coords) });
+        userFeature.setProperties({ name: "📍 You are here" });
         userFeature.setStyle(
           new Style({
             image: new CircleStyle({
@@ -259,33 +279,41 @@ const MapView = ({ locations = [], onLocate }) => {
           })
         );
         userSource.addFeature(userFeature);
+
+        // ✅ popup for user
+        popupRef.current.innerHTML = `
+          <div class="space-y-2">
+            <h3 class="font-bold text-base">📍 You are here</h3>
+            <p class="text-xs text-gray-500">
+              Lat: ${pos.coords.latitude.toFixed(5)}, Lng: ${pos.coords.longitude.toFixed(5)}
+            </p>
+          </div>
+        `;
+        popupOverlayRef.current.setPosition(coords);
+
         mapInstance.current
           .getView()
           .animate({ center: coords, zoom: 15, duration: 700 });
+
         onLocate?.({
           lat: pos.coords.latitude,
           lng: pos.coords.longitude,
         });
       },
-      () => alert("Unable to retrieve location.")
+      (error) => {
+        console.error("Error getting location:", error);
+        alert(
+          error.message === "User denied Geolocation"
+            ? "Please allow location access in your browser."
+            : "Unable to fetch your exact location."
+        );
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0,
+      }
     );
-  };
-
-  // ✅ select location from sidebar
-  const handleSelectLocation = (loc) => {
-    const coords = fromLonLat([loc.lng, loc.lat]);
-    popupRef.current.innerHTML = `
-      <div class="space-y-2">
-        <h3 class="font-bold text-base">${loc.name}</h3>
-        <p class="text-xs italic text-gray-500">${loc.category || ""}</p>
-        ${loc.description ? `<p class="text-sm text-gray-700">${loc.description}</p>` : ""}
-        ${loc.image ? `<img class="w-40 h-24 object-cover rounded-lg shadow" src="${loc.image}" alt="${loc.name}" />` : ""}
-      </div>
-    `;
-    popupOverlayRef.current.setPosition(coords);
-    mapInstance.current
-      .getView()
-      .animate({ center: coords, zoom: 15, duration: 700 });
   };
 
   // ✅ sidebar
