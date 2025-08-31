@@ -14,13 +14,19 @@ export const categoryIcons = {
   library: "https://cdn-icons-png.flaticon.com/512/2920/2920264.png",
   cafe: "https://cdn-icons-png.flaticon.com/512/2965/2965567.png",
   theater: "https://cdn-icons-png.flaticon.com/512/888/888063.png",
-  airport: "https://cdn-icons-png.flaticon.com/512/190/190307.png",
+
+  // ✅ fixed airport icon
+  airport: "https://cdn-icons-png.flaticon.com/512/3063/3063825.png",
+
   trainstation: "https://cdn-icons-png.flaticon.com/512/235/235861.png",
   busstop: "https://cdn-icons-png.flaticon.com/512/201/201818.png",
   beach: "https://cdn-icons-png.flaticon.com/512/869/869869.png",
   mountain: "https://cdn-icons-png.flaticon.com/512/1047/1047500.png",
   zoo: "https://cdn-icons-png.flaticon.com/512/616/616408.png",
-  stadium: "https://cdn-icons-png.flaticon.com/512/2764/2764741.png",
+
+  // ✅ fixed stadium icon
+  stadium: "https://cdn-icons-png.flaticon.com/512/67/67745.png",
+
   temple: "https://cdn-icons-png.flaticon.com/512/1995/1995470.png",
   church: "https://cdn-icons-png.flaticon.com/512/1995/1995522.png",
   bank: "https://cdn-icons-png.flaticon.com/512/2331/2331940.png",
@@ -35,21 +41,5 @@ export const categoryIcons = {
   police: "https://cdn-icons-png.flaticon.com/512/1865/1865269.png",
   firestation: "https://cdn-icons-png.flaticon.com/512/2037/2037789.png",
   playground: "https://cdn-icons-png.flaticon.com/512/4320/4320337.png",
-
-  // Extra categories
-  embassy: "https://cdn-icons-png.flaticon.com/512/2642/2642297.png",
-  ferry: "https://cdn-icons-png.flaticon.com/512/616/616655.png",
-  port: "https://cdn-icons-png.flaticon.com/512/1056/1056650.png",
-  hikingtrail: "https://cdn-icons-png.flaticon.com/512/2331/2331942.png",
-  cycling: "https://cdn-icons-png.flaticon.com/512/888/888034.png",
-  gym: "https://cdn-icons-png.flaticon.com/512/2331/2331958.png",
-  spa: "https://cdn-icons-png.flaticon.com/512/3105/3105898.png",
-  bar: "https://cdn-icons-png.flaticon.com/512/3075/3075967.png",
-  nightclub: "https://cdn-icons-png.flaticon.com/512/2331/2331956.png",
-  foodtruck: "https://cdn-icons-png.flaticon.com/512/1046/1046784.png",
-  camping: "https://cdn-icons-png.flaticon.com/512/1046/1046857.png",
-  waterfall: "https://cdn-icons-png.flaticon.com/512/2328/2328851.png",
-  desert: "https://cdn-icons-png.flaticon.com/512/1047/1047519.png",
-  island: "https://cdn-icons-png.flaticon.com/512/869/869869.png",
-  factory: "https://cdn-icons-png.flaticon.com/512/3135/3135789.png",
 };
+

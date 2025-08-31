@@ -19,9 +19,10 @@ import {
   Text,
 } from "ol/style";
 import { X, Layers, LocateFixed } from "lucide-react";
-import { categoryIcons, defaultIcon } from "../utils/icons";
 
-// ✅ detect retina
+// ✅ fallback icons
+import { defaultIcon, categoryIcons } from "../utils/icons";
+
 const isRetina = window.devicePixelRatio > 1;
 
 // ✅ basemaps
@@ -33,7 +34,7 @@ const basemaps = {
     attributions:
       '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors © <a href="https://carto.com/">CARTO</a>',
     crossOrigin: "anonymous",
-    maxZoom: 20,
+    maxZoom: 22, // allow deeper zoom
   }),
   Dark: new XYZ({
     url: `https://{1-4}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}${
@@ -42,13 +43,13 @@ const basemaps = {
     attributions:
       '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors © <a href="https://carto.com/">CARTO</a>',
     crossOrigin: "anonymous",
-    maxZoom: 20,
+    maxZoom: 22,
   }),
   Satellite: new XYZ({
     url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
     attributions: "Tiles © Esri",
     crossOrigin: "anonymous",
-    maxZoom: 20,
+    maxZoom: 22,
   }),
 };
 
@@ -67,7 +68,7 @@ const MapView = ({ locations = [], onLocate }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showBasemapMenu, setShowBasemapMenu] = useState(false);
 
-  // ✅ proper small icon scales for 512px flaticon images
+  // ✅ small icon scaling
   const getIconScale = () => {
     if (window.innerWidth < 480) return 0.06;
     if (window.innerWidth < 768) return 0.055;
@@ -75,7 +76,7 @@ const MapView = ({ locations = [], onLocate }) => {
     return 0.045;
   };
 
-  // ✅ cluster + marker style
+  // ✅ style function
   const styleFunction = useCallback((feature) => {
     const features = feature.get("features");
     const size = features.length;
@@ -96,13 +97,13 @@ const MapView = ({ locations = [], onLocate }) => {
     }
 
     const props = features[0].getProperties();
-    const category = (props.category || "").toLowerCase().trim();
-    const icon = categoryIcons[category] || defaultIcon;
+    // ✅ now we use the `loc.icon` passed from App.jsx
+    const iconUrl = props.icon || defaultIcon;
 
     return new Style({
       image: new Icon({
         anchor: [0.5, 1],
-        src: icon,
+        src: iconUrl,
         scale: getIconScale(),
         crossOrigin: "anonymous",
       }),
@@ -139,7 +140,6 @@ const MapView = ({ locations = [], onLocate }) => {
       zIndex: 0,
     });
 
-    // ✅ Tailwind styled popup container
     popupRef.current = document.createElement("div");
     popupRef.current.className =
       "bg-white rounded-xl shadow-lg border border-gray-300 p-3 max-w-xs";
@@ -154,7 +154,7 @@ const MapView = ({ locations = [], onLocate }) => {
     mapInstance.current = new Map({
       target: mapRef.current,
       layers: [tileLayerRef.current, clusterLayerRef.current, userLayerRef.current],
-      view: new View({ center: fromLonLat([77.209, 28.6139]), zoom: 5 }),
+      view: new View({ center: fromLonLat([77.209, 28.6139]), zoom: 5, maxZoom: 22 }),
       overlays: [popupOverlayRef.current],
       controls: [],
     });
@@ -180,7 +180,6 @@ const MapView = ({ locations = [], onLocate }) => {
       const props = first.getProperties();
       const coordinates = first.getGeometry().getCoordinates();
 
-      // ✅ Tailwind popup
       popupRef.current.innerHTML = `
         <div class="space-y-2">
           <h3 class="font-bold text-base">${props.name}</h3>
@@ -231,7 +230,8 @@ const MapView = ({ locations = [], onLocate }) => {
       const f = new Feature({
         geometry: new Point(fromLonLat([loc.lng, loc.lat])),
       });
-      f.setProperties({ ...loc, type: "poi" });
+      // ✅ make sure loc.icon is attached
+      f.setProperties({ ...loc, type: "poi", icon: loc.icon || defaultIcon });
       return f;
     });
 
